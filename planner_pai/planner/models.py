@@ -40,7 +40,7 @@ class Compra(models.Model):
     nome = models.ForeignKey(Pessoa, on_delete=models.CASCADE)
     data_de_inicio = models.DateField('Dia da compra', default=timezone.now)
     compra = models.CharField(max_length=100)
-    valor = models.IntegerField()
+    valor = models.FloatField()
     parcela_atual = models.PositiveIntegerField(default=1)
     numero_de_parcelas = models.PositiveIntegerField(default=1)
 
@@ -54,7 +54,7 @@ class GastosMensais(models.Model):
 
     ano_e_mes = models.ForeignKey('AnoMes', on_delete=models.CASCADE)
     nome = models.ForeignKey('Pessoa', on_delete=models.CASCADE, null=True, blank=True)
-    total_gasto = models.IntegerField(default=0)
+    total_gasto = models.FloatField(default=0)
     numero_de_compras = models.PositiveIntegerField(default=0)
 
     def __str__(self):
