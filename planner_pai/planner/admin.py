@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import AnoMes, Pessoa, Compra, GastosMensais
+from .models import AnoMes, Pessoa, Compra, GastosMensais, Recebimento
 from django.db.models import Sum
 from django.contrib.admin import DateFieldListFilter
 from django.utils.translation import gettext_lazy as _
@@ -84,7 +84,29 @@ class GastosMensaisAdmin(admin.ModelAdmin):
     
     total_gasto_geral.short_description = 'Total gasto geral'
 
+class RecebimentoAdmin(admin.ModelAdmin):
+    list_display = ('ano_e_mes', 'pessoa', 'valor_recebido', 'valor_restante')
+    list_filter = (AnoMesFilter,)
+
+    def ano_e_mes(self, obj):
+        return f"{obj.ano_e_mes}"
+
+    def pessoa(self, obj):
+        return f"{obj.pessoa}"
+
+    def valor_recebido(self, obj):
+        return f"{obj.valor_recebido}"
+
+    def valor_restante(self, obj):
+        total_gasto = Compra.objects.filter(
+            ano_e_mes=obj.ano_e_mes,
+            nome=obj.pessoa
+        ).aggregate(Sum('valor'))['valor__sum'] or 0
+        saldo_restante = obj.valor_recebido - total_gasto
+        return saldo_restante
+
 admin.site.register(AnoMes)
 admin.site.register(Compra, CompraAdmin)
 admin.site.register(Pessoa)
 admin.site.register(GastosMensais, GastosMensaisAdmin)
+admin.site.register(Recebimento, RecebimentoAdmin)

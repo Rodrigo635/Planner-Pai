@@ -4,6 +4,7 @@ from django.dispatch import receiver
 from django.utils import timezone
 from django.db.models import Sum
 from django.db.models import Q
+from django.urls import reverse
 
 class AnoMes(models.Model):
     class Meta:
@@ -63,30 +64,39 @@ class GastosMensais(models.Model):
 @receiver(post_save, sender=Compra)
 def criar_gasto_mensal(sender, instance, created, **kwargs):
     if created:
-        # Obter o ano e mês da compra
         ano_e_mes = instance.ano_e_mes
 
-        # Obter a pessoa associada à compra
         pessoa = instance.nome
 
-        # Obter o total gasto da pessoa para o mesmo AnoMes
         total_gasto_pessoa = Compra.objects.filter(
             ano_e_mes=ano_e_mes,
             nome=pessoa
         ).aggregate(Sum('valor'))['valor__sum'] or 0
 
-        # Verificar se já existe um GastoMensal para a mesma pessoa e AnoMes
         gasto_mensal, created = GastosMensais.objects.get_or_create(
             ano_e_mes=ano_e_mes,
             nome=pessoa
         )
 
-        # Atualizar o total gasto e número de compras no GastoMensal da pessoa
         gasto_mensal.total_gasto = total_gasto_pessoa
         gasto_mensal.numero_de_compras = Compra.objects.filter(
             ano_e_mes=ano_e_mes,
             nome=pessoa
         ).count()
 
-        # Salvar os valores calculados
         gasto_mensal.save()
+
+class Recebimento(models.Model):
+    class Meta:
+        verbose_name = 'Recebimento'
+        verbose_name_plural = 'Recebimentos'
+
+    ano_e_mes = models.ForeignKey('AnoMes', on_delete=models.CASCADE)
+    valor_recebido = models.FloatField()
+    pessoa = models.ForeignKey('Pessoa', on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"Recebimento de {self.pessoa} em {self.ano_e_mes}"
+
+    def get_absolute_url(self):
+        return reverse('detalhes_recebimento', args=[str(self.id)])
